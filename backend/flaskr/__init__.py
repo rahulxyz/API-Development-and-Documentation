@@ -45,19 +45,44 @@ def create_app(test_config=None):
     Create an endpoint to handle GET requests
     for all available categories.
     """
-
     @app.route("/categories", methods=["GET"])
     def get_categories():
         try:
             categories = Category.query.order_by(Category.id).all()
-            formatted_catgories = [category.format() for category in categories]
-            print(">>> ", formatted_catgories)
+            formatted_categories = {
+                c.id: c.type
+                for c in categories
+            }
 
             return jsonify(
                 {
                     "success": True,
-                    "categories": formatted_catgories,
-                    "total_categories": len(formatted_catgories),
+                    "categories": formatted_categories,
+                    "total_categories": len(formatted_categories),
+                }
+            )
+        except Exception as e:
+            db.session.rollback()
+        finally:
+            db.session.close()
+
+    @app.route("/categories/<int:category_id>/questions", methods=["GET"])
+    def get_questions_by_category(category_id):
+        try:
+            questions_by_category_id = (
+                Question.query
+                .filter(Question.category == category_id)
+                .all()
+            )
+            category = Category.query.get(category_id)
+            formatted_questions = [question.format() for question in questions_by_category_id]
+
+            return jsonify(
+                {
+                    "success": True,
+                    "questions": formatted_questions,
+                    "total_categories": len(formatted_questions),
+                    "current_category": category.type if category else None
                 }
             )
         except Exception as e:
@@ -77,7 +102,6 @@ def create_app(test_config=None):
     ten questions per page and pagination at the bottom of the screen for three pages.
     Clicking on the page numbers should update the questions.
     """
-
     @app.route("/questions", methods=["GET"])
     def get_questions():
         try:
@@ -113,7 +137,6 @@ def create_app(test_config=None):
     TEST: When you click the trash icon next to a question, the question will be removed.
     This removal will persist in the database and when you refresh the page.
     """
-
     @app.route("/questions/<int:question_id>", methods=["DELETE"])
     def delete_question(question_id):
         try:
@@ -146,7 +169,6 @@ def create_app(test_config=None):
     the form will clear and the question will appear at the end of the last page
     of the questions list in the "List" tab.
     """
-
     @app.route("/questions", methods=["POST"])
     def create_question():
         try:
@@ -181,12 +203,11 @@ def create_app(test_config=None):
     only question that include that string within their question.
     Try using the word "title" to start.
     """
-
     @app.route("/questions/search", methods=["POST"])
     def search_question():
         try:
             body = request.get_json()
-            search = body.get("search", None)
+            search = body.get("searchTerm", None)
 
             questions = Question.query.filter(
                 Question.question.ilike(f"%{search}%")
@@ -197,6 +218,8 @@ def create_app(test_config=None):
                 {
                     "success": True,
                     "questions": formatted_questions,
+                    "total_questions": len(formatted_questions),
+                    "current_category": None
                 }
             )
         except Exception as e:
@@ -212,7 +235,6 @@ def create_app(test_config=None):
     categories in the left column will cause only questions of that
     category to be shown.
     """
-
     @app.route("/questions/category/<string:category>", methods=["GET"])
     def question_by_category(category):
         try:
@@ -255,23 +277,22 @@ def create_app(test_config=None):
     one question at a time is displayed, the user is allowed to answer
     and shown whether they were correct or not.
     """
-    @app.route("/play", methods=["POST"])
+    @app.route("/quizzes", methods=["POST"])
     def play():
         try:
             body = request.get_json()
-            category = body.get("category", None)
-            asked_ids = body.get("asked_ids", None)
-
+            category = body.get("quiz_category", None)
+            asked_ids = body.get("previous_questions", None)
+            
             query = (
                 db.session.query(Question, Category)
                 .join(Category, Question.category == Category.id, isouter=True)
-                .filter(Category.type.ilike(f'%{category}%'))
                 .filter(Question.id.notin_(asked_ids))
                 .order_by(func.random())
             )
             
-            if category:
-                query = query.filter(Category.type.ilike(f'%{category}%'))
+            if category["id"] != 0:
+                query = query.filter(Category.id == category["id"])
 
             result = query.first()
             if result:
@@ -289,7 +310,7 @@ def create_app(test_config=None):
             return jsonify(
                 {
                     "success": True,
-                    "questions": question,
+                    "question": question,
                 }
             )
 
