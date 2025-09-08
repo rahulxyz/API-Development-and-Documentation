@@ -12,6 +12,8 @@ class TriviaTestCase(unittest.TestCase):
     def setUp(self):
         """Define test variables and initialize app."""
         self.database_name = "trivia_test"
+        self.database_user = os.getenv("DATABASE_USER")
+        self.database_password = os.getenv("DATABASE_PASSWORD")
         self.database_user = 'postgres'
         self.database_password = 'password'
         self.database_host = "localhost:5432"

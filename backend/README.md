@@ -36,6 +36,17 @@ Populate the database using the `trivia.psql` file provided. From the `backend` 
 psql trivia < trivia.psql
 ```
 
+
+### Set up Environment Variables
+
+Create a `.env` file in the project root with the following values (replace with your own credentials):
+
+```env
+DATABASE_USER=your_db_username
+DATABASE_PASSWORD=your_db_password
+DATABASE_HOST=localhost:5432
+```
+
 ### Run the Server
 
 From within the `./src` directory first ensure you are working using your created virtual environment.
@@ -48,36 +59,12 @@ flask run --reload
 
 The `--reload` flag will detect file changes and restart the server automatically.
 
-## To Do Tasks
+## API reference
 
-These are the files you'd want to edit in the backend:
-
-1. `backend/flaskr/__init__.py`
-2. `backend/test_flaskr.py`
-
-One note before you delve into your tasks: for each endpoint, you are expected to define the endpoint and response data. The frontend will be a plentiful resource because it is set up to expect certain endpoints and response data formats already. You should feel free to specify endpoints in your own way; if you do so, make sure to update the frontend or you will get some unexpected behavior.
-
-1. Use Flask-CORS to enable cross-domain requests and set response headers.
-2. Create an endpoint to handle `GET` requests for questions, including pagination (every 10 questions). This endpoint should return a list of questions, number of total questions, current category, categories.
-3. Create an endpoint to handle `GET` requests for all available categories.
-4. Create an endpoint to `DELETE` a question using a question `ID`.
-5. Create an endpoint to `POST` a new question, which will require the question and answer text, category, and difficulty score.
-6. Create a `POST` endpoint to get questions based on category.
-7. Create a `POST` endpoint to get questions based on a search term. It should return any questions for whom the search term is a substring of the question.
-8. Create a `POST` endpoint to get questions to play the quiz. This endpoint should take a category and previous question parameters and return a random questions within the given category, if provided, and that is not one of the previous questions.
-9. Create error handlers for all expected errors including 400, 404, 422, and 500.
-
-## Documenting your Endpoints
-
-You will need to provide detailed documentation of your API endpoints including the URL, request parameters, and the response body. Use the example below as a reference.
-
-### Documentation Example
-
-`GET '/api/v1.0/categories'`
-
-- Fetches a dictionary of categories in which the keys are the ids and the value is the corresponding string of the category
-- Request Arguments: None
-- Returns: An object with a single key, `categories`, that contains an object of `id: category_string` key: value pairs.
+### GET '/categories'
+- Fetches a dictionary of categories in which the keys are the ids and the value is the corresponding string of the category  
+- Request Arguments: None  
+- Returns: An object with categories and their ids  
 
 ```json
 {
@@ -90,9 +77,186 @@ You will need to provide detailed documentation of your API endpoints including 
 }
 ```
 
-## Testing
+---
 
-Write at least one test for the success and at least one error behavior of each endpoint using the unittest library.
+### GET '/categories/<int:category_id>/questions'
+- Fetches questions based on category id  
+- Request Arguments: `category_id` (integer)  
+- Returns: A list of questions for the category, total number of questions, and current category  
+
+```json
+{
+  "success": true,
+  "questions": [
+    {
+      "id": 1,
+      "question": "What is the capital of France?",
+      "answer": "Paris",
+      "category": 3,
+      "difficulty": 2
+    }
+  ],
+  "total_questions": 1,
+  "current_category": "Geography"
+}
+```
+
+---
+
+### GET '/questions'
+- Fetches paginated questions (10 per page)  
+- Request Arguments: `page` (optional, default=1)  
+- Returns: A list of questions, total number of questions, categories, and current category  
+
+```json
+{
+  "success": true,
+  "questions": [
+    {
+      "id": 2,
+      "question": "Who painted the Mona Lisa?",
+      "answer": "Leonardo da Vinci",
+      "category": 2,
+      "difficulty": 2
+    }
+  ],
+  "total_questions": 20,
+  "current_category": null,
+  "categories": {
+    "1": "Science",
+    "2": "Art"
+  }
+}
+```
+
+---
+
+### DELETE '/questions/<int:question_id>'
+- Deletes a question by ID  
+- Request Arguments: `question_id` (integer)  
+- Returns: The id of the deleted question and updated total  
+
+```json
+{
+  "success": true,
+  "deleted": 5,
+  "total_questions": 19
+}
+```
+
+---
+
+### POST '/questions'
+- Creates a new question  
+- Request Body:  
+```json
+{
+  "question": "What is the capital of India?",
+  "answer": "New Delhi",
+  "category": 3,
+  "difficulty": 2
+}
+```  
+- Returns: The id of the created question  
+
+```json
+{
+  "success": true,
+  "created": 25
+}
+```
+
+---
+
+### POST '/questions/search'
+- Searches for questions containing a search term  
+- Request Body:  
+```json
+{
+  "searchTerm": "title"
+}
+```  
+- Returns: A list of matching questions  
+
+```json
+{
+  "success": true,
+  "questions": [
+    {
+      "id": 6,
+      "question": "What is the title of the national anthem of USA?",
+      "answer": "The Star-Spangled Banner",
+      "category": 4,
+      "difficulty": 2
+    }
+  ],
+  "total_questions": 1,
+  "current_category": null
+}
+```
+
+---
+
+### GET '/questions/category/<string:category>'
+- Fetches questions by category name  
+- Request Arguments: `category` (string)  
+- Returns: A list of questions belonging to the given category  
+
+```json
+{
+  "success": true,
+  "questions": [
+    {
+      "question": "What is H2O commonly known as?",
+      "answer": "Water",
+      "difficulty": 1,
+      "category": "Science"
+    }
+  ]
+}
+```
+
+---
+
+### POST '/quizzes'
+- Fetches a random question for quiz play  
+- Request Body:  
+```json
+{
+  "previous_questions": [1, 2],
+  "quiz_category": {"id": 1, "type": "Science"}
+}
+```  
+- Returns: A random question not asked before in the given category  
+
+```json
+{
+  "success": true,
+  "question": {
+    "id": 7,
+    "question": "What planet is known as the Red Planet?",
+    "answer": "Mars",
+    "difficulty": 2,
+    "category": "Science"
+  }
+}
+```
+
+### Error Handling
+Errors are returned as JSON objects in the following format:
+```
+{
+    "success": False, 
+    "error": 400,
+    "message": "bad request"
+}
+```
+The API will return three error types when requests fail:
+- 400: Bad Request
+- 404: Resource Not Found
+- 422: Not Processable 
+
+## Testing
 
 To deploy the tests, run
 
@@ -100,5 +264,11 @@ To deploy the tests, run
 dropdb trivia_test
 createdb trivia_test
 psql trivia_test < trivia.psql
-python test_flaskr.py
+python -m unittest test_flaskr.py
 ```
+
+## Authors
+Rahul Gupta
+
+## Acknowledgements 
+Forked from Udacity API-development-and-Documentation

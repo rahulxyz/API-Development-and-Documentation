@@ -1,9 +1,13 @@
 from sqlalchemy import Column, String, Integer
 from flask_sqlalchemy import SQLAlchemy
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 database_name = 'trivia'
-database_user = 'postgres'
-database_password = 'password'
-database_host = 'localhost:5432'
+database_user = os.getenv("DATABASE_USER")
+database_password = os.getenv("DATABASE_PASSWORD")
+database_host = os.getenv("DATABASE_HOST")
 database_path = f'postgresql://{database_user}:{database_password}@{database_host}/{database_name}'
 
 db = SQLAlchemy()
