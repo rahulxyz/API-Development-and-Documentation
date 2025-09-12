@@ -105,7 +105,7 @@ def create_app(test_config=None):
             questions = Question.query.order_by(Question.id).paginate(
                 page=page, per_page=QUESTIONS_PER_PAGE, error_out=False
             )
-            formatted_questions = [question.format() for question in questions]
+            formatted_questions = [question.format() for question in questions.items]
             categories = Category.query.order_by(Category.id).all()
             formatted_categories = {
                 c.id: c.type
@@ -123,6 +123,7 @@ def create_app(test_config=None):
             )
         except Exception as e:
             db.session.rollback()
+            abort(500)
         finally:
             db.session.close()
 
